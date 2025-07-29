@@ -101,8 +101,9 @@ EOF
             CURRENT_SHELL=$(ps -o comm= -p $PPID)
             case $CURRENT_SHELL in
                 *zsh)
-                    # echo "Executing in zsh"
-                    zsh -c "noglob print -rz -- \"$RESPONSE\""
+                    # we want the exact command including the quotes to be saved in history
+                    ESCAPED_CMD=$(printf %q "$RESPONSE")
+                    zsh -ic "print -s -- $ESCAPED_CMD"
                     ;;
                 *bash)
                     history -s "$RESPONSE"
