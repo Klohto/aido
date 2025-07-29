@@ -25,7 +25,7 @@ while true; do
         if [ -z "$QUERY" ]; then
         # long form or use "$(cat <<'EOF' input input input EOF
         # )"
-            QUERY=$(gum write --no-show-help --placeholder "What do you want to do?")
+            QUERY=$(gum write --no-show-help --placeholder "What do you want to do?" --cursor.foreground "#E6D3A7")
         fi
 
         printf '%s\n' "$QUERY" | gum style --border "none" --padding "0 0" --italic --foreground "#E6D3A7"
@@ -36,17 +36,26 @@ while true; do
         # Add current query to messages
         MESSAGES=$(printf '%s\n' "$MESSAGES" | jq ". + [{\"role\": \"user\", \"content\": $ESCAPED_QUERY}]")
 
+        SYSTEM_MESSAGE=$(cat <<EOF
+        Give a $(basename $SHELL) shell one-liner to answer the question.
+        The command will run on $(uname -s -r -m).
+        Do not use a code block or leading/trailing backticks.
+        Follow the users instructions for extra details.
+        If given a complex query that requires a explanation, respond as a comment to not interfere with the command output.
+EOF
+        )
+
         CONVERSATION=$(cat <<EOF
             {
                 "model": "claude-opus-4-20250514",
                 "max_tokens": 32000,
-                "system": "Give a $(basename $SHELL) shell one-liner to answer the question. The command will run on $(uname -s -r -m). Do not use a code block or leading/trailing backticks. Follow the users instructions for extra details. If given a complex query that requires a explanation, respond as a comment to not interfere with the command output.",
+                "system": $(printf '%s' "$SYSTEM_MESSAGE" | jq -Rs .),
                 "messages": $MESSAGES
             }
 EOF
         )
 
-        RESPONSE=$(gum spin -s 'moon' --title ${SPINNER_OPTIONS[$((RANDOM % ${#SPINNER_OPTIONS[@]}))]} --show-output -- \
+        RESPONSE=$(gum spin -s 'moon' --title.foreground "#7A6C5F" --title ${SPINNER_OPTIONS[$((RANDOM % ${#SPINNER_OPTIONS[@]}))]} --show-output -- \
             curl \
             --silent \
             --url "https://api.anthropic.com/v1/messages" \
@@ -90,16 +99,16 @@ EOF
         # Put the key back for gum to handle
         if [[ $key == $'\e[A' ]]; then
             # Up arrow - Copy
-            CHOICE=$(printf "󰆏 Copy\n󰌑 Run\n󰑖 Redo" | gum choose --no-show-help --height 3 --cursor.foreground 14 --header '' --selected 'Copy')
+            CHOICE=$(printf "󰆏 Copy\n󰌑 Run\n󰑖 Redo" | gum choose --no-show-help --height 3 --cursor.foreground "#7A6C5F" --header '' --selected 'Copy')
         elif [[ $key == $'\e[B' ]]; then
-            CHOICE=$(printf "󰆏 Copy\n󰌑 Run\n󰑖 Redo" | gum choose --no-show-help --height 3 --cursor.foreground 14 --header '' --selected 'Redo')
+            CHOICE=$(printf "󰆏 Copy\n󰌑 Run\n󰑖 Redo" | gum choose --no-show-help --height 3 --cursor.foreground "#7A6C5F" --header '' --selected 'Redo')
         else
             # Enter - default to Run
             CHOICE="󰌑 Run"
         fi
     else
         # Any other key - use gum input for extending conversation
-        CHOICE=$(echo -n "$key" | gum input --no-show-help --placeholder "Add details to refine the command...")
+        CHOICE=$(echo -n "$key" | gum input --cursor.foreground "#E6D3A7" --no-show-help --placeholder "Add details to refine the command...")
     fi
 
     # Cancelling any gum action leaves the CHOICE empty, we want to return to handle the other key events
