@@ -108,7 +108,7 @@ EOF
         fi
     else
         # Any other key - use gum input for extending conversation
-        CHOICE=$(echo -n "$key" | gum input --cursor.foreground "#E6D3A7" --no-show-help --placeholder "Add details to refine the command...")
+        CHOICE=$(echo -n "$key" | gum input --char-limit=0 --cursor.foreground "#E6D3A7" --no-show-help --placeholder "Add details to refine the command...")
     fi
 
     # Cancelling any gum action leaves the CHOICE empty, we want to return to handle the other key events
